@@ -3,6 +3,4 @@ project(NuMVC)
 
 set(CMAKE_CXX_STANDARD 14)
 
-add_executable(NuMVC
-        src.cpp)
-#        last.cpp)
+add_executable(NuMVC src.cpp)
