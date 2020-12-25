@@ -2,9 +2,14 @@
 #include <bitset>
 #include <cstring>
 #include <cstdlib>
+#include <fstream>
 #include <iostream>
 
 using namespace std;
+
+string name = "frb59-26-4.mis";
+ifstream fin("frb59-26-mis/" + name);
+ofstream fout("frb59-26-mis/" + name + ".numvc.csv");
 
 const int MaxV = 1600;
 const int MaxE = 300000;
@@ -244,7 +249,18 @@ void initialize() {
 
 void algorithm() {
     time_t start_time = time(NULL);
+    int last_output = 0;
+    fout << "time,steps,score" << endl;
+
     for (int steps = 1; steps <= max_steps && current.count(); steps++) {
+        time_t end_time = time(NULL);
+        if (end_time - start_time != last_output) {
+            last_output = end_time - start_time;
+            fout << last_output << "," << steps << "," << solution.count() << endl;
+        }
+        if (last_output >= 100)
+            break;
+
         if (!uncovered_edges.size()) {
             solution = current;
             int v = 0, score = -1000000000;
@@ -263,17 +279,15 @@ void algorithm() {
         just_insert = v_insert;
         update_weight();
     }
-    time_t end_time = time(NULL);
-    cout << "used_time: " << end_time - start_time << endl;
 }
 
 void frb_input() {
     string s;
-    cin >> s >> s >> v_num >> e_num;
+    fin >> s >> s >> v_num >> e_num;
     for (int i = 1; i <= v_num; i++)
         vertices[i].adj_count = 0;
     for (int i = 0; i < e_num; i++) {
-        cin >> s >> edges[i].v1 >> edges[i].v2;
+        fin >> s >> edges[i].v1 >> edges[i].v2;
         vertices[edges[i].v1].adjancet(i, edges[i].v2);
         vertices[edges[i].v2].adjancet(i, edges[i].v1);
     }
@@ -299,7 +313,7 @@ struct Options {
 #define EXPERIMENTAL
 
 const Options options[] = {
-        Options(-1, 20201225, 1000000, 0.3, 0.5)
+        Options(-1, 20201225, 1000000000, 0.3, 0.5)
 };
 
 void set_hyperparameters() {
@@ -324,6 +338,6 @@ int main() {
     set_hyperparameters();
     initialize();
     algorithm();
-    frb_output();
+//    frb_output();
     return 0;
 }

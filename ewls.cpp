@@ -1,18 +1,14 @@
-//#define DEBUG
-
 #include <list>
 #include <set>
 #include <vector>
 #include <stack>
 #include <ctime>
 #include <cstdlib>
-#include <cstdio>
-#include <cstring>
+#include <fstream>
 #include <iostream>
 #include <algorithm>
 
 using namespace std;
-
 
 #define rep(i, l, r) for(int i=(l);(i)<=(r);++(i))
 
@@ -22,13 +18,16 @@ using namespace std;
 #define debug(...)
 #endif
 
+//#define CONF
+//#define SCORE
+
+string name = "frb59-26-5.mis";
+ifstream fin("frb59-26-mis/" + name);
+ofstream fout("frb59-26-mis/" + name + ".ewls.csv");
+
 typedef std::list<int>::iterator P;
 typedef std::pair<int, int> pii;
 #define mp std::make_pair
-using std::stack;
-using std::vector;
-using std::sort;
-using std::list;
 
 const int N = 4010;
 const int M = 2200010;
@@ -36,7 +35,7 @@ const int M = 2200010;
 // Hyperparameters
 const int SEED = 20201225;
 const int DELTA = 1;
-const int MAX_STEP = 100000;
+const int MAX_STEP = 100000000;
 
 struct E {
     int to, next, id;
@@ -51,18 +50,15 @@ void adde(int u, int v, int id) {
 int randint(int n) { return rand() % n; }
 
 int iter;
-int ans_id;
-char buf[256];
 int n, m;
 int w[N][N], eid[N][N];
 int u[M], v[M], c[M], checked[M], lastvis[M];
 int dscore[N];
-int in_c[N], size_c, best_size_c, ans_c[N];
-int max_cover_w[N];
+int in_c[N], size_c, best_size_c;
 P list_P[M];
 int cover_edge;
-int begin_time;
 int conf_change[N];
+int max_cover_w[M];
 
 list<int> L;
 
@@ -71,26 +67,31 @@ void ins_c(int u) {
     dscore[u] = 0;
     for (int p = head[u]; p; p = e[p].next)
         if (!in_c[e[p].to]) {
+#ifdef CONF
             conf_change[e[p].to] = 1;
+#endif
             ++cover_edge;
             dscore[e[p].to] -= c[e[p].id];
             dscore[u] -= c[e[p].id];
             L.erase(list_P[e[p].id]);
             list_P[e[p].id] = L.end();
         } else dscore[e[p].to] += c[e[p].id];
-    //C.insert(u);
     in_c[u] = 1;
     ++size_c;
 }
 
 void rm_c(int u) {
     if (!in_c[u]) debug("[ERROR] deleting not existing vertice\n");
+#ifdef CONF
     conf_change[u] = 0;
+#endif
     dscore[u] = 0;
     for (int p = head[u]; p; p = e[p].next)
         if (!in_c[e[p].to]) {
             --cover_edge;
+#ifdef CONF
             conf_change[e[p].to] = 1;
+#endif
             dscore[e[p].to] += c[e[p].id];
             dscore[u] += c[e[p].id];
             lastvis[e[p].id] = iter;
@@ -159,33 +160,39 @@ int cmp_age(int x, int y) {
 }
 
 pii choose_exchange_u(int v1, int v2) {
-//    if (!conf_change[v1] && !conf_change[v2]) return mp(0, 0);
     tots = 0;
-    rep(j, 1, n) if (in_c[j]) {
+#ifndef CONF
+    rep(j, 1, n) {
+        if (in_c[j]) {
             if (score(j, v1) > 0) s[++tots] = mp(j, v1);
             if (score(j, v2) > 0) s[++tots] = mp(j, v2);
-//            if (conf_change[v1] && score(j, v1) > 0) s[++tots] = mp(j, v1);
-//            if (conf_change[v2] && score(j, v2) > 0) s[++tots] = mp(j, v2);
         }
-    //rep(j,1,n) if (in_c[j]) {
-    //	if (conf_change[v1] && score(j,v1)>0) s[++tots]=mp(j,v1);
-    //	if (conf_change[v2] && score(j,v2)>0) s[++tots]=mp(j,v2);
-    //}
+    }
+#else
+    if (!conf_change[v1] && !conf_change[v2]) return mp(0, 0);
+    rep(j, 1, n) {
+        if (in_c[j]) {
+            if (conf_change[v1] && score(j, v1) > 0) s[++tots] = mp(j, v1);
+            if (conf_change[v2] && score(j, v2) > 0) s[++tots] = mp(j, v2);
+        }
+    }
+#endif
+#ifdef SCORE
+    int mxscore = 0, p = -1;
+    for (int i = 1; i <= tots; ++i) {
+        if (p == -1 || score(s[i].first, s[i].second) > mxscore) {
+            mxscore = score(s[i].first, s[i].second);
+            p = i;
+        }
+    }
+    if (p != -1) return s[p];
+#endif
     if (tots) return s[randint(tots)];
-    //int mxscore,p=-1;
-    //for (int i=1;i<=tots;++i) {
-    //	if (p==-1 || score(s[i].first, s[i].second)>mxscore) {
-    //		mxscore = score(s[i].first, s[i].second);
-    //		p=i;
-    //	}
-    //}
-    //if (p!=-1) return s[p];
     return mp(0, 0);
 }
 
 pii choose_exchange_pair() { // O(m)
     // TODO: maintain UL
-    //debug("%d*%d\n", C.size(), L.size());
     if (L.empty()) return mp(0, 0);
     max_c_dscore = -1e9;
     //rep(i,1,n) if (in_c[i] && max_c_dscore<dscore[i])
@@ -211,6 +218,10 @@ void random_swap() {
 }
 
 void solve(int Step) {
+    time_t start_time = time(NULL);
+    int last_output = 0;
+    fout << "time,steps,score" << endl;
+
     rep(i, 1, n) conf_change[i] = 1;
     rep(i, 1, n) max_cover_w[i] = 1;
     rep(i, 1, n) in_c[i] = 0;
@@ -229,11 +240,20 @@ void solve(int Step) {
         ins_c(q);
     }
     best_size_c = size_c;
-    rep(i, 1, n) ans_c[i] = in_c[i];
 
     remove_vertices(DELTA);
 
     for (iter = 1; iter <= Step; ++iter) {
+        time_t end_time = time(NULL);
+
+        if (end_time - start_time != last_output) {
+            last_output = end_time - start_time;
+            fout << last_output << "," << iter << "," << best_size_c << endl;
+        }
+
+        if (last_output >= 100)
+            break;
+
         if (iter % 10000 == 0) {
             debug("iter: %d\n", iter);
         }
@@ -275,7 +295,6 @@ void solve(int Step) {
                 ins_c(q);
             }
             best_size_c = size_c;
-            rep(i, 1, n) ans_c[i] = in_c[i];
             while (!c_plus.empty()) rm_c(c_plus.top()), c_plus.pop();
             remove_vertices(DELTA);
             rep(i, 1, m) checked[i] = 0;
@@ -286,14 +305,12 @@ void solve(int Step) {
 void init() {
     tote = 0;
     iter = 0;
-    ans_id = 0;
     best_size_c = 0;
     cover_edge = 0;
     size_c = 0;
     rep(i, 1, n) rep(j, 1, n) w[i][j] = eid[i][j] = 0;
     rep(i, 1, n) {
         in_c[i] = 0;
-        ans_c[i] = 0;
         dscore[i] = 0;
         head[i] = 0;
     }
@@ -304,21 +321,17 @@ void frb_test() {
     srand(SEED);
     init();
     string tmp;
-    cin >> tmp >> tmp >> n >> m;
+    fin >> tmp >> tmp >> n >> m;
     cerr << "v_num = " << n << endl;
     cerr << "e_num = " << m << endl;
     rep(i, 1, m) {
-        cin >> tmp >> u[i] >> v[i];
+        fin >> tmp >> u[i] >> v[i];
         adde(u[i], v[i], i);
         adde(v[i], u[i], i);
         w[u[i]][v[i]] = w[v[i]][u[i]] = 1;
         eid[u[i]][v[i]] = eid[v[i]][u[i]] = i;
     }
-    time_t start_time = time(0);
     solve(MAX_STEP);
-    time_t end_time = time(0);
-    cout << best_size_c << endl;
-    cout << "used_time: " << end_time - start_time << endl;
 }
 
 int main() {
