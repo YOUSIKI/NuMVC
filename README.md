@@ -18,7 +18,7 @@
 ## About
 
 This is an unofficial C++ implementation of [NuMVC: An Efficient Local Search Algorithm for Minimum Vertex Cover](http://arxiv.org/abs/1402.0584).
-And it's optimized for the testing data of [最大团终稿](http://dapractise.openjudge.cn/2020mcvfinal/1/) on OpenJudge(http://dapractise.openjudge.cn/).
+And it's optimized for the testing data of [最大团终稿](http://dapractise.openjudge.cn/2020mcvfinal/1/) on [OpenJudge](http://dapractise.openjudge.cn/).
 We achieved the best score (268) with the shortest running time (2179ms) in the final test. For the details of our optimization, please refer to [中文文档](README-CN.md). 
 
 
