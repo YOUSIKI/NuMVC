@@ -22,6 +22,13 @@ And it's optimized for the testing data of [最大团终稿](http://dapractise.o
 We achieved the best score (268) with the shortest running time (2179ms) in the final test. For the details of our optimization, please refer to [中文文档](README-CN.md). 
 
 
+<!-- Build -->
+## Build
+
+```bash
+clang++ src.cpp -o numvc --std=c++11
+```
+
 
 <!-- LICENSE -->
 ## License
